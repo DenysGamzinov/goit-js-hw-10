@@ -1,75 +1,76 @@
-import flatpickr from 'flatpickr';
-import 'flatpickr/dist/flatpickr.min.css';
-import iziToast from 'izitoast';
-import 'izitoast/dist/css/iziToast.min.css';
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
-const dateTimeInput = document.querySelector('#datetime-picker');
-const btnStart = document.querySelector('[data-start]');
-btnStart.disabled = true;
+const datetimePickerRef = document.querySelector("#datetime-picker");
+const startBtnRef = document.querySelector("[data-start]");
+const daysRef = document.querySelector("[data-days]");
+const hoursRef = document.querySelector("[data-hours]");
+const minutesRef = document.querySelector("[data-minutes]");
+const secondsRef = document.querySelector("[data-seconds]");
 let userSelectedDate;
+startBtnRef.disabled = true;
 
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-
   onClose(selectedDates) {
-    const selectedDate = selectedDates[0].getTime();
-
-    if (selectedDate < Date.now()) {
-      iziToast.error({
-        title: 'Error',
-        position: 'topCenter',
-        message: 'Please choose a date in the future',
-      });
-      btnStart.disabled = true;
-    } else {
-      btnStart.disabled = false;
-      userSelectedDate = selectedDate;
-    }
+      if (selectedDates[0] - (new Date()) <= 0) {
+        iziToast.error({
+            message: "Please choose a date in the future",
+        });
+          startBtnRef.disabled = true;
+      } else {
+          userSelectedDate = selectedDates[0];
+          startBtnRef.disabled = false;
+      };
   },
 };
 
-flatpickr(dateTimeInput, options);
 
-btnStart.addEventListener('click', startTimer);
+datetimePickerRef.flatpickr(options);
 
-function startTimer() {
-  const startTime = userSelectedDate;
-  const interval = setInterval(() => {
-    const currentTime = Date.now();
-    const deltaTime = startTime - currentTime;
+startBtnRef.addEventListener("click", onStartBtnClick);
 
-    if (deltaTime <= 0) {
-      clearInterval(interval);
-    } else {
-      const { days, hours, minutes, seconds } = convertMs(deltaTime);
-      document.querySelector('[data-days]').textContent = `${days}`;
-      document.querySelector('[data-hours]').textContent = `${hours}`;
-      document.querySelector('[data-minutes]').textContent = `${minutes}`;
-      document.querySelector('[data-seconds]').textContent = `${seconds}`;
-    }
-    document.getElementById('datetime-picker').disabled = true;
-    btnStart.disabled = true;
-  }, 1000);
+function onStartBtnClick() {
+    startBtnRef.disabled = true;
+    datetimePickerRef.disabled = true;
+    const intervalId = setInterval(() => {
+        if (userSelectedDate - new Date()>=0) {
+            const dataObj = convertMs(userSelectedDate - new Date());
+            daysRef.textContent = addLeadingZero(dataObj.days);
+            hoursRef.textContent = addLeadingZero(dataObj.hours);
+            minutesRef.textContent = addLeadingZero(dataObj.minutes);
+            secondsRef.textContent = addLeadingZero(dataObj.seconds);
+        } else {
+            clearInterval(intervalId);
+            datetimePickerRef.disabled = false;
+        }
+    }, 1000);
 }
 
 function convertMs(ms) {
+  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
-  const days = addLeadingZero(Math.floor(ms / day));
-  const hours = addLeadingZero(Math.floor((ms % day) / hour));
-  const minutes = addLeadingZero(Math.floor(((ms % day) % hour) / minute));
-  const seconds = addLeadingZero(
-    Math.floor((((ms % day) % hour) % minute) / second)
-  );
+
+  // Remaining days
+  const days = Math.floor(ms / day);
+  // Remaining hours
+  const hours = Math.floor((ms % day) / hour);
+  // Remaining minutes
+  const minutes = Math.floor(((ms % day) % hour) / minute);
+  // Remaining seconds
+  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
 }
 
 function addLeadingZero(value) {
-  return String(value).padStart(2, '0');
+    return value.toString().padStart(2, "0"); 
 }

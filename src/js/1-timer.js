@@ -30,11 +30,8 @@ const options = {
   },
 };
 
-
 datetimePickerRef.flatpickr(options);
-
 startBtnRef.addEventListener("click", onStartBtnClick);
-
 function onStartBtnClick() {
     startBtnRef.disabled = true;
     datetimePickerRef.disabled = true;
